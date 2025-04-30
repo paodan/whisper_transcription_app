@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Speech Transcription</title>
+  <script>
+    let pollInterval;
+
+    function uploadAudio() {
+      const file = document.getElementById("audioInput").files[0];
+      const formData = new FormData();
+      formData.append("audio", file);
+
+      document.getElementById("result").value = "";
+      document.getElementById("summary").value = "";
+      document.getElementById("progress").innerText = "Uploading and processing...";
+
+      fetch("/transcribe", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "processing") {
+          pollInterval = setInterval(checkProgress, 1000);
+        }
+      });
+    }
+
+    function checkProgress() {
+      fetch("/progress")
+        .then(res => res.json())
+        .then(data => {
+          const percent = data.percent;
+          document.getElementById("progress").innerText = `Progress: ${percent}%`;
+
+          if (percent >= 100) {
+            clearInterval(pollInterval);
+            document.getElementById("result").value = data.text || "";
+            document.getElementById("summary").value = data.summary || "";
+          }
+        });
+    }
+  </script>
+</head>
+<body>
+  <h1>Upload Audio File</h1>
+  <input type="file" id="audioInput" accept="audio/*" />
+  <button onclick="uploadAudio()">Transcribe</button>
+  <p id="progress" style="color: blue;"></p>
+  <h2>Transcript</h2>
+  <textarea id="result" rows="15" style="width:100%; white-space:pre-wrap;" readonly></textarea>
+  <h2>Summary</h2>
+  <textarea id="summary" rows="8" style="width:100%; white-space:pre-wrap;" readonly></textarea>
+</body>
+</html>
+
+
+<!-- <!DOCTYPE html>
+<html>
+<head>
+  <title>Speech Transcription</title>
+</head>
+<body>
+  <h1>Upload Audio File</h1>
+  <input type="file" id="audioInput" accept="audio/*" />
+  <button onclick="uploadAudio()">Transcribe</button>
+  <h2>Transcript</h2>
+  <textarea id="result" rows="15" style="width:100%; white-space:pre-wrap;" readonly></textarea>
+  <textarea id="summary" rows="8" style="width:100%; white-space:pre-wrap;" readonly></textarea>
+  <pre id="summary"></pre>
+
+  <script>
+    function uploadAudio() {
+      const file = document.getElementById("audioInput").files[0];
+      const formData = new FormData();
+      formData.append("audio", file);
+
+      fetch("/transcribe", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        document.getElementById("result").innerText = data.text;
+        document.getElementById("summary").innerText = data.summary;
+      });
+    }
+  </script>
+</body>
+</html> -->
