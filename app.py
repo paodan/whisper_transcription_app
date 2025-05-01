@@ -7,8 +7,10 @@ import threading
 import time
 
 app = Flask(__name__)
-model = whisper.load_model("medium")  # 可选 tiny/base/small/medium/large
-UPLOAD_FOLDER = "temp"
+model = whisper.load_model("base")  # 可选 tiny/base/small/medium/large
+#UPLOAD_FOLDER = "temp"
+UPLOAD_FOLDER = os.path.join("static", "uploaded")
+os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -49,8 +51,9 @@ def transcribe():
         progress["text"] = transcript
         progress["summary"] = summary
         progress["percent"] = 100
+        progress["audio_url"] = f"/static/uploaded/{audio.filename}"
 
-        os.remove(file_path)
+        #os.remove(file_path)
 
     threading.Thread(target=process).start()
 

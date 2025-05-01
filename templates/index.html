@@ -37,6 +37,14 @@
             clearInterval(pollInterval);
             document.getElementById("result").value = data.text || "";
             document.getElementById("summary").value = data.summary || "";
+            if (data.audio_url) {
+              const audioPlayer = document.getElementById("audioPlayer");
+              const audioSource = document.getElementById("audioSource");
+              audioSource.src = data.audio_url;
+              audioPlayer.load();
+              audioPlayer.style.display = "block";
+  }
+
           }
         });
     }
@@ -47,44 +55,15 @@
   <input type="file" id="audioInput" accept="audio/*" />
   <button onclick="uploadAudio()">Transcribe</button>
   <p id="progress" style="color: blue;"></p>
+
+  <audio id="audioPlayer" controls style="display:none; margin-top:10px;">
+    <source id="audioSource" src="" type="audio/mp4">
+    Your browser does not support the audio element.
+  </audio>
+
   <h2>Transcript</h2>
   <textarea id="result" rows="15" style="width:100%; white-space:pre-wrap;" readonly></textarea>
   <h2>Summary</h2>
   <textarea id="summary" rows="8" style="width:100%; white-space:pre-wrap;" readonly></textarea>
 </body>
 </html>
-
-
-<!-- <!DOCTYPE html>
-<html>
-<head>
-  <title>Speech Transcription</title>
-</head>
-<body>
-  <h1>Upload Audio File</h1>
-  <input type="file" id="audioInput" accept="audio/*" />
-  <button onclick="uploadAudio()">Transcribe</button>
-  <h2>Transcript</h2>
-  <textarea id="result" rows="15" style="width:100%; white-space:pre-wrap;" readonly></textarea>
-  <textarea id="summary" rows="8" style="width:100%; white-space:pre-wrap;" readonly></textarea>
-  <pre id="summary"></pre>
-
-  <script>
-    function uploadAudio() {
-      const file = document.getElementById("audioInput").files[0];
-      const formData = new FormData();
-      formData.append("audio", file);
-
-      fetch("/transcribe", {
-        method: "POST",
-        body: formData
-      })
-      .then(res => res.json())
-      .then(data => {
-        document.getElementById("result").innerText = data.text;
-        document.getElementById("summary").innerText = data.summary;
-      });
-    }
-  </script>
-</body>
-</html> -->
