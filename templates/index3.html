@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Speech Transcription</title>
+  <script>
+    let pollInterval;
+
+    function uploadAudio() {
+      const file = document.getElementById("audioInput").files[0];
+      const formData = new FormData();
+      formData.append("audio", file);
+
+      document.getElementById("result").value = "";
+      document.getElementById("summary").value = "";
+      document.getElementById("progress").innerText = "Uploading and processing...";
+      document.getElementById("audioControls").style.display = "none";
+
+      fetch("/transcribe", {
+        method: "POST",
+        body: formData
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.status === "processing") {
+          pollInterval = setInterval(checkProgress, 1000);
+        }
+      });
+    }
+
+    function checkProgress() {
+      fetch("/progress")
+        .then(res => res.json())
+        .then(data => {
+          const percent = data.percent;
+          document.getElementById("progress").innerText = `Progress: ${percent}%`;
+
+          if (percent >= 100) {
+            clearInterval(pollInterval);
+            document.getElementById("result").value = data.text || "";
+            document.getElementById("summary").value = data.summary || "";
+
+            if (data.audio_url) {
+              const audioPlayer = document.getElementById("audioPlayer");
+              const audioSource = document.getElementById("audioSource");
+              audioSource.src = data.audio_url;
+              audioPlayer.load();
+              document.getElementById("audioControls").style.display = "block";
+            }
+          }
+        });
+    }
+
+    function skip(seconds) {
+      const audio = document.getElementById("audioPlayer");
+      audio.currentTime += seconds;
+    }
+  </script>
+</head>
+<body>
+  <h1>Upload Audio File</h1>
+  <input type="file" id="audioInput" accept="audio/*" />
+  <button onclick="uploadAudio()">Transcribe</button>
+  <p id="progress" style="color: blue;"></p>
+
+  <div id="audioControls" style="display:none; margin-top:10px;">
+    <audio id="audioPlayer" controls style="width:100%;">
+      <source id="audioSource" src="" type="audio/mp4">
+      Your browser does not support the audio element.
+    </audio>
+    <div style="margin-top: 10px;">
+      <button onclick="skip(-15)">⏪ Rewind 15s</button>
+      <button onclick="skip(-5)">⏪ Rewind 5s</button>
+      <button onclick="skip(-1)">⏪ Rewind 1s</button>
+      <button onclick="skip(1)">⏩ Forward 1s</button>
+      <button onclick="skip(5)">⏩ Forward 5s</button>
+      <button onclick="skip(15)">⏩ Forward 15s</button>
+    </div>
+  </div>
+
+  <h2>Transcript</h2>
+  <textarea id="result" rows="15" style="width:100%; white-space:pre-wrap;" readonly></textarea>
+  <h2>Summary</h2>
+  <textarea id="summary" rows="8" style="width:100%; white-space:pre-wrap;" readonly></textarea>
+</body>
+</html>

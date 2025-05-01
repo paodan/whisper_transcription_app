@@ -1,20 +1,30 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Speech Transcription</title>
   <script>
     let pollInterval;
 
+    // 上传音频文件
     function uploadAudio() {
       const file = document.getElementById("audioInput").files[0];
       const formData = new FormData();
       formData.append("audio", file);
 
+      // 重置显示
       document.getElementById("result").value = "";
       document.getElementById("summary").value = "";
       document.getElementById("progress").innerText = "Uploading and processing...";
-      document.getElementById("audioControls").style.display = "none";
+      document.getElementById("elapsedTime").innerText = ""; // 清空时间
+      document.getElementById("audioControls").style.display = "none"; // 隐藏音频控制
+      document.getElementById("progressBar").style.width = "0%"; // 清空进度条
 
+      // 隐藏导出按钮
+      document.getElementById("exportButton").style.display = "none"; 
+
+      // 发送音频文件到后端进行处理
       fetch("/transcribe", {
         method: "POST",
         body: formData
@@ -22,37 +32,61 @@
       .then(res => res.json())
       .then(data => {
         if (data.status === "processing") {
-          pollInterval = setInterval(checkProgress, 1000);
+          pollInterval = setInterval(checkProgress, 2000); // 每2秒检查一次进度
         }
       });
     }
 
+    // 定期检查处理进度
     function checkProgress() {
       fetch("/progress")
         .then(res => res.json())
         .then(data => {
           const percent = data.percent;
           document.getElementById("progress").innerText = `Progress: ${percent}%`;
+          document.getElementById("progressBar").style.width = `${percent}%`; // 更新进度条
+
+          // 显示耗时（如果已存在）
+          if (data.time !== undefined) {
+            document.getElementById("elapsedTime").innerText = `Elapsed Time: ${data.time.toFixed(2)} seconds`;
+          }
 
           if (percent >= 100) {
-            clearInterval(pollInterval);
-            document.getElementById("result").value = data.text || "";
-            document.getElementById("summary").value = data.summary || "";
+            clearInterval(pollInterval); // 停止进度检查
+            document.getElementById("result").value = data.text || ""; // 显示转录结果
+            document.getElementById("summary").value = data.summary || ""; // 显示摘要
 
+            // 如果音频链接存在，加载音频播放器
             if (data.audio_url) {
               const audioPlayer = document.getElementById("audioPlayer");
               const audioSource = document.getElementById("audioSource");
               audioSource.src = data.audio_url;
-              audioPlayer.load();
-              document.getElementById("audioControls").style.display = "block";
+              audioPlayer.load(); // 重新加载音频
+              document.getElementById("audioControls").style.display = "block"; // 显示音频控制
             }
+
+            // 显示导出按钮
+            document.getElementById("exportButton").style.display = "inline-block";
           }
         });
     }
 
+    // 快进或快退音频
     function skip(seconds) {
       const audio = document.getElementById("audioPlayer");
       audio.currentTime += seconds;
+    }
+
+    // 导出文本文件
+    function exportText() {
+      const transcript = document.getElementById("result").value;
+      const summary = document.getElementById("summary").value;
+      const textToSave = `--- Transcript ---\n${transcript}\n\n--- Summary ---\n${summary}`;
+      const blob = new Blob([textToSave], { type: "text/plain" });
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = "transcription_and_summary.txt";
+      link.click();
     }
   </script>
 </head>
@@ -62,6 +96,13 @@
   <button onclick="uploadAudio()">Transcribe</button>
   <p id="progress" style="color: blue;"></p>
 
+  <!-- 进度条 -->
+  <div style="width: 100%; background-color: #f3f3f3; border-radius: 5px;">
+    <div id="progressBar" style="width: 0%; height: 20px; background-color: #4caf50; border-radius: 5px;"></div>
+  </div>
+  <p id="elapsedTime" style="color: green;"></p>
+
+  <!-- 音频控制 -->
   <div id="audioControls" style="display:none; margin-top:10px;">
     <audio id="audioPlayer" controls style="width:100%;">
       <source id="audioSource" src="" type="audio/mp4">
@@ -81,5 +122,8 @@
   <textarea id="result" rows="15" style="width:100%; white-space:pre-wrap;" readonly></textarea>
   <h2>Summary</h2>
   <textarea id="summary" rows="8" style="width:100%; white-space:pre-wrap;" readonly></textarea>
+
+  <!-- 导出按钮 -->
+  <button id="exportButton" onclick="exportText()" style="display:none; margin-top: 10px;">Download Transcript & Summary</button>
 </body>
 </html>
