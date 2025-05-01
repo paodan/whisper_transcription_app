@@ -1,3 +1,5 @@
 flask
 openai-whisper
 openai>=1.2.0
+transformers
+torch
