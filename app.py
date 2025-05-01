@@ -15,15 +15,27 @@ ssl._create_default_https_context = ssl._create_unverified_context
 app = Flask(__name__)
 start_time = None
 transcribing = False
-model = whisper.load_model("base")  # 可选 tiny/base/small/medium/large
+# 这里使用了 Whisper 模型，支持多种语言
+# 你可以根据需要选择其他模型
+# 例如：model = whisper.load_model("tiny")（不支持长文本）
+# 但速度更快
+# 你可以在 https://huggingface.co/models?pipeline_tag=automatic-speech-recognition&sort=downloads 上找到更多模型
+model = whisper.load_model("large")  # 可选 tiny/base/small/medium/large
 UPLOAD_FOLDER = "static/uploaded"
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
 
 progress = {"percent": 0}
 
 # ✅ 加载 LED summarizer（支持长文本）
-tokenizer = LEDTokenizer.from_pretrained("allenai/led-base-16384")
-summarizer_model = LEDForConditionalGeneration.from_pretrained("allenai/led-base-16384")
+modelname = "allenai/led-base-16384"
+# 这里使用了 LED 模型，支持长文本摘要
+# 你可以根据需要选择其他模型
+# 例如：modelname = "facebook/bart-large-cnn"（不支持长文本）
+# 但速度更快
+# 你可以在 https://huggingface.co/models?pipeline_tag=summarization&sort=downloads 上找到更多模型
+# 这里使用了 LED 模型，支持长文本摘要
+tokenizer = LEDTokenizer.from_pretrained(modelname)
+summarizer_model = LEDForConditionalGeneration.from_pretrained(modelname)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 summarizer_model.to(device)
 summarizer_model.eval()
