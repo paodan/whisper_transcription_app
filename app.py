@@ -20,7 +20,7 @@ transcribing = False
 # 例如：model = whisper.load_model("tiny")（不支持长文本）
 # 但速度更快
 # 你可以在 https://huggingface.co/models?pipeline_tag=automatic-speech-recognition&sort=downloads 上找到更多模型
-model = whisper.load_model("base")  # 可选 tiny/base/small/medium/large
+model = whisper.load_model("large")  # 可选 tiny/base/small/medium/large
 UPLOAD_FOLDER = os.path.join("static", "uploaded")
 print(f"Upload folder: {UPLOAD_FOLDER}")
 os.makedirs(UPLOAD_FOLDER, exist_ok=True)
